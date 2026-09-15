@@ -20,8 +20,8 @@ export default function AdminLoginPage() {
     setIsLoading(true)
     setError('')
     
-    // Auth login menggunakan konfigurasi "credentials-admin" di auth.js
-    const res = await signIn('credentials-admin', {
+    // Auth login menggunakan konfigurasi "admin-credentials" di auth.js
+    const res = await signIn('admin-credentials', {
       redirect: false,
       email,
       password
