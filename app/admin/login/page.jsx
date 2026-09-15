@@ -1,13 +1,40 @@
+"use client"
+
+import { useState } from 'react'
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-export const metadata = {
-  title: 'Admin Login - TNLL',
-}
-
 export default function AdminLoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
+    
+    // Auth login menggunakan konfigurasi "credentials-admin" di auth.js
+    const res = await signIn('credentials-admin', {
+      redirect: false,
+      email,
+      password
+    })
+
+    if (res?.error) {
+      setError('Kredensial tidak valid. Silakan periksa kembali email dan kata sandi Anda.')
+      setIsLoading(false)
+    } else {
+      router.push('/admin/dashboard') // Redirect ke dashboard jika berhasil
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900 relative overflow-hidden">
       {/* Background decorations */}
@@ -23,14 +50,22 @@ export default function AdminLoginPage() {
           <p className="text-slate-400 text-sm">Gunakan kredensial admin Anda untuk masuk ke dasbor manajemen.</p>
         </div>
 
-        <form className="space-y-6">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/50 text-red-500 text-sm p-3 rounded-xl mb-6 text-center">
+            {error}
+          </div>
+        )}
+
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-slate-300">Alamat Email / Username</Label>
+            <Label htmlFor="email" className="text-slate-300">Alamat Email</Label>
             <Input 
               id="email" 
               type="text" 
               placeholder="admin@tnll.com" 
               required 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="h-12 rounded-xl bg-slate-900 border-slate-800 text-white focus-visible:ring-emerald-500" 
             />
           </div>
@@ -43,12 +78,18 @@ export default function AdminLoginPage() {
               type="password" 
               placeholder="••••••••"
               required 
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               className="h-12 rounded-xl bg-slate-900 border-slate-800 text-white focus-visible:ring-emerald-500" 
             />
           </div>
 
-          <Button type="submit" className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-base mt-4 shadow-lg shadow-emerald-600/20 transition-all">
-            Masuk ke Dasbor
+          <Button 
+            type="submit" 
+            disabled={isLoading}
+            className="w-full h-12 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-base mt-4 shadow-lg shadow-emerald-600/20 transition-all"
+          >
+            {isLoading ? 'Memproses...' : 'Masuk ke Dasbor'}
           </Button>
         </form>
 
