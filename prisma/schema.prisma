@@ -1,0 +1,1296 @@
+// Prisma Schema — TNLL Explore
+// Dikonversi dari 18 Laravel migrations
+// Jalankan: npx prisma db push (untuk DB baru)
+// atau: npx prisma db pull (introspect dari DB yang sudah ada)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USERS & ADMINS ──────────────────────────────────────────────────────────
+
+model User {
+  id                Int       @id @default(autoincrement())
+  name              String
+  username          String?   @unique
+  email             String    @unique
+  googleId          String?   @unique @map("google_id")
+  emailVerifiedAt   DateTime? @map("email_verified_at")
+  password          String?
+  passwordChangedAt DateTime? @map("password_changed_at")
+  phone             String?
+  address           String?   @db.Text
+  idType            String?   @map("id_type")
+  idNumber          String?   @map("id_number")
+  avatar            String?
+  status            String    @default("active")
+  lastLoginAt       DateTime? @map("last_login_at")
+  lastLoginIp       String?   @map("last_login_ip")
+  lastSeenAt        DateTime? @map("last_seen_at")
+  rememberToken     String?   @map("remember_token")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  deletedAt         DateTime? @map("deleted_at")
+
+  // Relations
+  bookings            Booking[]
+  feedbacks           Feedback[]
+  wishlists           Wishlist[]
+  contentWishlists    ContentWishlist[]
+  notifications       Notification[]
+  pushSubscriptions   PushSubscription[]
+  activityLogs        ActivityLog[]
+  searchHistories     SearchHistory[]
+  visitLogs           VisitorLog[]
+  articleComments     ArticleComment[]
+  articleLikes        ArticleLike[]
+  articleFavorites    ArticleFavorite[]
+  articleViews        ArticleView[]
+  destinationComments DestinationComment[]
+  floraComments       FloraComment[]
+  faunaComments       FaunaComment[]
+  galleryComments     GalleryComment[]
+  galleryLikes        GalleryLike[]
+  galleryWishlists    GalleryWishlist[]
+  chatConversations   ChatConversation[]
+  newsletterSubscribers NewsletterSubscriber[]
+  couponUsages        CouponUsage[]
+  commentLikes        CommentLike[]
+  floraCommentLikes   FloraCommentLike[]
+  faunaCommentLikes   FaunaCommentLike[]
+  galleryCommentLikes GalleryCommentLike[]
+  articleCommentLikes ArticleCommentLike[]
+  blockedCommenter    BlockedCommenter?
+  articles            Article[]
+
+  @@map("users")
+}
+
+model Admin {
+  id                    Int       @id @default(autoincrement())
+  name                  String
+  email                 String    @unique
+  username              String    @unique
+  emailVerifiedAt       DateTime? @map("email_verified_at")
+  password              String
+  passwordChangedAt     DateTime? @map("password_changed_at")
+  twoFactorSecret       String?   @map("two_factor_secret")
+  twoFactorEnabled      Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorConfirmedAt  DateTime? @map("two_factor_confirmed_at")
+  role                  String    @default("admin")
+  createdById           Int?      @map("created_by")
+  createdBy             Admin?    @relation("AdminCreatedBy", fields: [createdById], references: [id])
+  createdAdmins         Admin[]   @relation("AdminCreatedBy")
+  isActive              Boolean   @default(true) @map("is_active")
+  lastLoginAt           DateTime? @map("last_login_at")
+  rememberToken         String?   @map("remember_token")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  roles               AdminRole[]
+  activityLogs        ActivityLog[]
+  articleComments     ArticleComment[]
+  articleRevisions    ArticleRevision[]
+  destinationComments DestinationComment[]
+  floraComments       FloraComment[]
+  faunaComments       FaunaComment[]
+  galleryComments     GalleryComment[]
+  chatConversations   ChatConversation[]
+  feedbackReplies     FeedbackReply[]
+  announcements       Announcement[]
+  createdEvents       Event[]
+  newsletterCampaigns NewsletterCampaign[]
+  validatedTickets    Ticket[]
+  blockedCommenters   BlockedCommenter[]
+
+  @@map("admins")
+}
+
+// ─── ROLES & PERMISSIONS ─────────────────────────────────────────────────────
+
+model Role {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  permissions RolePermission[]
+  admins      AdminRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  group       String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  roles RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       Int @map("role_id")
+  permissionId Int @map("permission_id")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permission")
+}
+
+model AdminRole {
+  adminId Int @map("admin_id")
+  roleId  Int @map("role_id")
+  admin   Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  role    Role  @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([adminId, roleId])
+  @@map("admin_role")
+}
+
+// ─── DESTINATIONS ─────────────────────────────────────────────────────────────
+
+model DestinationCategory {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  icon        String?
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  destinations Destination[]
+
+  @@map("destination_categories")
+}
+
+model Destination {
+  id                   Int      @id @default(autoincrement())
+  name                 String
+  categoryId           Int?     @map("category_id")
+  category             DestinationCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  slug                 String   @unique
+  description          String?  @db.Text
+  shortDescription     String?  @db.Text @map("short_description")
+  address              String   @db.Text
+  city                 String
+  province             String   @default("Sulawesi Tengah")
+  latitude             Decimal? @db.Decimal(10, 8)
+  longitude            Decimal? @db.Decimal(11, 8)
+  googleMapsEmbed      String?  @db.Text @map("google_maps_embed")
+  operatingHours       String?  @db.Text @map("operating_hours")
+  contactPhone         String?  @map("contact_phone")
+  contactEmail         String?  @map("contact_email")
+  facilities           Json?
+  rules                Json?
+  parkingFees          Json?    @map("parking_fees")
+  metaTitle            String?  @map("meta_title")
+  metaDescription      String?  @db.Text @map("meta_description")
+  keywords             String?
+  isFeatured           Boolean  @default(false) @map("is_featured")
+  showOperatingHours   Boolean  @default(true) @map("show_operating_hours")
+  showFacilitiesRules  Boolean  @default(true) @map("show_facilities_rules")
+  showPrices           Boolean  @default(true) @map("show_prices")
+  showParkingFees      Boolean  @default(true) @map("show_parking_fees")
+  isActive             Boolean  @default(true) @map("is_active")
+  rating               Decimal  @default(0) @db.Decimal(2, 1)
+  reviewCount          Int      @default(0) @map("review_count")
+  visitorCount         Int      @default(0) @map("visitor_count")
+  viewsCount           Int      @default(0) @map("views_count")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  deletedAt            DateTime? @map("deleted_at")
+
+  images    DestinationImage[]
+  prices    DestinationPrice[]
+  bookings  Booking[]
+  comments  DestinationComment[]
+  wishlists Wishlist[]
+  feedbacks Feedback[]
+  galleries Gallery[]
+
+  @@index([isActive, isFeatured, rating])
+  @@map("destinations")
+}
+
+model DestinationImage {
+  id            Int      @id @default(autoincrement())
+  destinationId Int      @map("destination_id")
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  imagePath     String?  @map("image_path")
+  altText       String?  @map("alt_text")
+  isPrimary     Boolean  @default(false) @map("is_primary")
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("destination_images")
+}
+
+model DestinationPrice {
+  id            Int      @id @default(autoincrement())
+  destinationId Int      @map("destination_id")
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  category      String
+  label         String
+  description   String?  @db.Text
+  price         Decimal  @db.Decimal(12, 2)
+  weekendPrice  Decimal? @db.Decimal(12, 2) @map("weekend_price")
+  minAge        Int?     @map("min_age")
+  maxAge        Int?     @map("max_age")
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  bookingItems BookingItem[]
+
+  @@unique([destinationId, category])
+  @@map("destination_prices")
+}
+
+// ─── BOOKINGS & PAYMENTS ──────────────────────────────────────────────────────
+
+model Coupon {
+  id                     Int       @id @default(autoincrement())
+  code                   String    @unique
+  name                   String
+  description            String?   @db.Text
+  discountType           String    @default("percentage") @map("discount_type")
+  discountValue          Decimal   @db.Decimal(10, 2) @map("discount_value")
+  minOrderAmount         Decimal?  @db.Decimal(12, 2) @map("min_order_amount")
+  maxDiscount            Decimal?  @db.Decimal(12, 2) @map("max_discount")
+  usageLimit             Int?      @map("usage_limit")
+  usedCount              Int       @default(0) @map("used_count")
+  perUserLimit           Int?      @map("per_user_limit")
+  startDate              DateTime? @map("start_date")
+  endDate                DateTime? @map("end_date")
+  isActive               Boolean   @default(true) @map("is_active")
+  applicableDestinations Json?     @map("applicable_destinations")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  bookings  Booking[]
+  usages    CouponUsage[]
+
+  @@map("coupons")
+}
+
+model Booking {
+  id              Int       @id @default(autoincrement())
+  orderNumber     String    @unique @map("order_number")
+  userId          Int?      @map("user_id")
+  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  destinationId   Int       @map("destination_id")
+  destination     Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  visitDate       DateTime  @map("visit_date") @db.Date
+  visitTime       String?   @map("visit_time")
+  leaderName      String    @map("leader_name")
+  leaderNik       String?   @map("leader_nik")
+  leaderPhone     String    @map("leader_phone")
+  leaderEmail     String    @map("leader_email")
+  leaderAddress   String?   @map("leader_address")
+  totalVisitors   Int       @default(0) @map("total_visitors")
+  totalAdults     Int       @default(0) @map("total_adults")
+  totalChildren   Int       @default(0) @map("total_children")
+  totalSeniors    Int       @default(0) @map("total_seniors")
+  totalMotorcycles Int      @default(0) @map("total_motorcycles")
+  totalCars       Int       @default(0) @map("total_cars")
+  totalBuses      Int       @default(0) @map("total_buses")
+  specialRequests String?   @db.Text @map("special_requests")
+  subtotal        Decimal   @default(0) @db.Decimal(12, 2)
+  serviceFee      Decimal   @default(0) @db.Decimal(12, 2) @map("service_fee")
+  discount        Decimal   @default(0) @db.Decimal(12, 2)
+  discountCode    String?   @map("discount_code")
+  totalAmount     Decimal   @default(0) @db.Decimal(12, 2) @map("total_amount")
+  status          String    @default("pending")
+  couponId        Int?      @map("coupon_id")
+  coupon          Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  discountAmount  Decimal?  @db.Decimal(12, 2) @map("discount_amount")
+  cancelReason    String?   @db.Text @map("cancel_reason")
+  confirmedAt     DateTime? @map("confirmed_at")
+  usedAt          DateTime? @map("used_at")
+  cancelledAt     DateTime? @map("cancelled_at")
+  expiredAt       DateTime? @map("expired_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  deletedAt       DateTime? @map("deleted_at")
+
+  items        BookingItem[]
+  payment      Payment?
+  ticket       Ticket?
+  couponUsages CouponUsage[]
+
+  @@index([visitDate, status])
+  @@index([userId, status])
+  @@map("bookings")
+}
+
+model CouponUsage {
+  id        Int      @id @default(autoincrement())
+  couponId  Int      @map("coupon_id")
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId Int      @map("booking_id")
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  usedAt    DateTime @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("coupon_usages")
+}
+
+model BookingItem {
+  id                 Int      @id @default(autoincrement())
+  bookingId          Int      @map("booking_id")
+  booking            Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  destinationPriceId Int      @map("destination_price_id")
+  destinationPrice   DestinationPrice @relation(fields: [destinationPriceId], references: [id], onDelete: Cascade)
+  category           String
+  label              String
+  quantity           Int
+  unitPrice          Decimal  @db.Decimal(12, 2) @map("unit_price")
+  totalPrice         Decimal  @db.Decimal(12, 2) @map("total_price")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("booking_items")
+}
+
+model Payment {
+  id                   Int       @id @default(autoincrement())
+  bookingId            Int       @unique @map("booking_id")
+  booking              Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  transactionId        String?   @unique @map("transaction_id")
+  orderId              String    @unique @map("order_id")
+  snapToken            String?   @map("snap_token")
+  paymentType          String?   @map("payment_type")
+  paymentChannel       String?   @map("payment_channel")
+  vaNumber             String?   @map("va_number")
+  paymentCode          String?   @map("payment_code")
+  qrCodeUrl            String?   @map("qr_code_url")
+  grossAmount          Decimal   @db.Decimal(12, 2) @map("gross_amount")
+  status               String    @default("pending")
+  paidAt               DateTime? @map("paid_at")
+  expiredAt            DateTime? @map("expired_at")
+  snapResponse         Json?     @map("snap_response")
+  notificationResponse Json?     @map("notification_response")
+  midtransResponse     String?   @db.Text @map("midtrans_response")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
+
+model Ticket {
+  id                Int       @id @default(autoincrement())
+  bookingId         Int       @unique @map("booking_id")
+  booking           Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  ticketCode        String    @unique @map("ticket_code")
+  qrCodePath        String?   @map("qr_code_path")
+  qrData            String?   @db.Text @map("qr_data")
+  validDate         DateTime  @map("valid_date") @db.Date
+  totalPersons      Int       @default(1) @map("total_persons")
+  status            String    @default("valid")
+  usedAt            DateTime? @map("used_at")
+  validatedById     Int?      @map("validated_by")
+  validatedBy       Admin?    @relation(fields: [validatedById], references: [id], onDelete: SetNull)
+  validationNotes   String?   @map("validation_notes")
+  downloadCount     Int       @default(0) @map("download_count")
+  lastDownloadedAt  DateTime? @map("last_downloaded_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  @@index([validDate, status])
+  @@map("tickets")
+}
+
+// ─── FEEDBACK & WISHLIST ──────────────────────────────────────────────────────
+
+model Feedback {
+  id             Int       @id @default(autoincrement())
+  userId         Int?      @map("user_id")
+  user           User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  destinationId  Int?      @map("destination_id")
+  destination    Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  displayName    String?   @map("display_name")
+  isAnonymous    Boolean   @default(false) @map("is_anonymous")
+  subject        String
+  message        String    @db.Text
+  contactWhatsapp String?  @map("contact_whatsapp")
+  contactEmail   String?   @map("contact_email")
+  rating         Int?
+  images         Json?
+  status         String    @default("unread")
+  isPublished    Boolean   @default(true) @map("is_published")
+  ipAddress      String?   @map("ip_address")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  replies FeedbackReply[]
+
+  @@map("feedbacks")
+}
+
+model FeedbackReply {
+  id           Int      @id @default(autoincrement())
+  feedbackId   Int      @map("feedback_id")
+  feedback     Feedback @relation(fields: [feedbackId], references: [id], onDelete: Cascade)
+  adminId      Int      @map("admin_id")
+  admin        Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  replyMessage String   @db.Text @map("reply_message")
+  isPublic     Boolean  @default(true) @map("is_public")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("feedback_replies")
+}
+
+model Wishlist {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  destinationId Int      @map("destination_id")
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, destinationId])
+  @@map("wishlists")
+}
+
+model ContentWishlist {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentType String   @map("content_type")
+  contentId   BigInt   @map("content_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, contentType, contentId])
+  @@map("content_wishlists")
+}
+
+// ─── ANNOUNCEMENTS, BANNERS & EVENTS ─────────────────────────────────────────
+
+model Announcement {
+  id              Int       @id @default(autoincrement())
+  title           String
+  message         String    @db.Text
+  type            String    @default("banner")
+  notificationType String   @default("info") @map("notification_type")
+  bgColor         String    @default("#059669") @map("bg_color")
+  textColor       String    @default("#ffffff") @map("text_color")
+  linkUrl         String?   @map("link_url")
+  linkText        String?   @map("link_text")
+  isDismissible   Boolean   @default(true) @map("is_dismissible")
+  isActive        Boolean   @default(false) @map("is_active")
+  priority        Int       @default(0)
+  startAt         DateTime? @map("start_at")
+  endAt           DateTime? @map("end_at")
+  createdById     Int?      @map("created_by")
+  createdBy       Admin?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  viewCount       Int       @default(0) @map("view_count")
+  clickCount      Int       @default(0) @map("click_count")
+  dismissCount    Int       @default(0) @map("dismiss_count")
+  targetAudience  String    @default("all") @map("target_audience")
+  targetPages     Json?     @map("target_pages")
+  excludePages    Json?     @map("exclude_pages")
+  position        String    @default("top")
+  showDays        Json?     @map("show_days")
+  showTimeStart   String?   @map("show_time_start")
+  showTimeEnd     String?   @map("show_time_end")
+  animationType   String    @default("fade") @map("animation_type")
+  imagePath       String?   @map("image_path")
+  showCountdown   Boolean   @default(false) @map("show_countdown")
+  countdownLabel  String?   @map("countdown_label")
+  extraButtons    Json?     @map("extra_buttons")
+  historyLog      String?   @db.Text @map("history_log")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("announcements")
+}
+
+model Banner {
+  id              Int       @id @default(autoincrement())
+  title           String
+  subtitle        String?
+  imagePath       String    @map("image_path")
+  mobileImagePath String?   @map("mobile_image_path")
+  linkUrl         String?   @map("link_url")
+  linkTarget      String    @default("_self") @map("link_target")
+  sortOrder       Int       @default(0) @map("sort_order")
+  isActive        Boolean   @default(true) @map("is_active")
+  startAt         DateTime? @map("start_at")
+  endAt           DateTime? @map("end_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("banners")
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  title       String
+  slug        String    @unique
+  description String?   @db.Text
+  content     String?   @db.Text
+  image       String?
+  location    String?
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime? @map("end_date")
+  capacity    Int?
+  price       Decimal   @default(0) @db.Decimal(12, 0)
+  status      String    @default("draft")
+  category    String    @default("other")
+  createdById Int       @map("created_by")
+  createdBy   Admin     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("events")
+}
+
+// ─── ARTICLES (BLOG) ─────────────────────────────────────────────────────────
+
+model Article {
+  id              Int       @id @default(autoincrement())
+  title           String
+  slug            String    @unique
+  excerpt         String?   @db.Text
+  content         String    @db.Text
+  revisionCount   Int       @default(0) @map("revision_count")
+  lastAutoSave    DateTime? @map("last_auto_save")
+  featuredImage   String?   @map("featured_image")
+  category        String    @default("wisata")
+  locale          String    @default("id")
+  translationOfId Int?      @map("translation_of")
+  translationOf   Article?  @relation("ArticleTranslations", fields: [translationOfId], references: [id], onDelete: SetNull)
+  translations    Article[] @relation("ArticleTranslations")
+  authorName      String?   @map("author_name")
+  userId          Int?      @map("user_id")
+  user            User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  isPublished     Boolean   @default(false) @map("is_published")
+  isFeatured      Boolean   @default(false) @map("is_featured")
+  isPinned        Boolean   @default(false) @map("is_pinned")
+  publishedAt     DateTime? @map("published_at")
+  scheduledAt     DateTime? @map("scheduled_at")
+  archivedAt      DateTime? @map("archived_at")
+  viewsCount      Int       @default(0) @map("views_count")
+  likesCount      BigInt    @default(0) @map("likes_count")
+  readingTime     Int       @default(0) @map("reading_time")
+  metaTitle       String?   @map("meta_title")
+  metaDescription String?   @db.Text @map("meta_description")
+  metaKeywords    String?   @map("meta_keywords")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  tags      ArticleTag[]    @relation("ArticleTagPivot")
+  comments  ArticleComment[]
+  likes     ArticleLike[]
+  favorites ArticleFavorite[]
+  views     ArticleView[]
+  revisions ArticleRevision[]
+
+  @@map("articles")
+}
+
+model Tag {
+  id            Int      @id @default(autoincrement())
+  name          String
+  slug          String   @unique
+  articlesCount Int      @default(0) @map("articles_count")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  articles ArticleTag[] @relation("ArticleTagPivot")
+
+  @@map("article_tags")
+}
+
+model ArticleTag {
+  articleId Int     @map("article_id")
+  tagId     Int     @map("tag_id")
+  article   Article @relation("ArticleTagPivot", fields: [articleId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation("ArticleTagPivot", fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([articleId, tagId])
+  @@map("article_tag")
+}
+
+model ArticleComment {
+  id        Int       @id @default(autoincrement())
+  articleId Int       @map("article_id")
+  article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    Int?      @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId   Int?      @map("admin_id")
+  admin     Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  parentId  Int?      @map("parent_id")
+  parent    ArticleComment? @relation("ArticleCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   ArticleComment[] @relation("ArticleCommentReplies")
+  content   String    @db.Text
+  isVisible Boolean   @default(true) @map("is_visible")
+  isPinned  Boolean   @default(false) @map("is_pinned")
+  likesCount Int      @default(0) @map("likes_count")
+  status    String    @default("approved")
+  isReported Boolean  @default(false) @map("is_reported")
+  reportReason String? @map("report_reason")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  likes ArticleCommentLike[]
+
+  @@map("article_comments")
+}
+
+model ArticleCommentLike {
+  commentId Int            @map("comment_id")
+  userId    Int            @map("user_id")
+  comment   ArticleComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  @@id([commentId, userId])
+  @@map("article_comment_likes")
+}
+
+model ArticleLike {
+  id        Int      @id @default(autoincrement())
+  articleId Int      @map("article_id")
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([articleId, userId])
+  @@map("article_likes")
+}
+
+model ArticleFavorite {
+  id        Int      @id @default(autoincrement())
+  articleId Int      @map("article_id")
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([articleId, userId])
+  @@map("article_favorites")
+}
+
+model ArticleView {
+  id         Int      @id @default(autoincrement())
+  articleId  Int      @map("article_id")
+  article    Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  userId     Int?     @map("user_id")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @db.Text @map("user_agent")
+  referer    String?  @map("referer")
+  deviceType String?  @map("device_type")
+  timeSpent  Int      @default(0) @map("time_spent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("article_views")
+}
+
+model ArticleRevision {
+  id            Int      @id @default(autoincrement())
+  articleId     Int      @map("article_id")
+  article       Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  adminId       Int      @map("admin_id")
+  admin         Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  title         String
+  excerpt       String?  @db.Text
+  content       String   @db.Text
+  meta          Json?
+  changeSummary String?  @map("change_summary")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("article_revisions")
+}
+
+model BlockedCommenter {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @unique @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId      Int       @map("admin_id")
+  admin        Admin     @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  reason       String?
+  blockedUntil DateTime? @map("blocked_until")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("blocked_commenters")
+}
+
+model BadWord {
+  id          Int      @id @default(autoincrement())
+  word        String
+  replacement String   @default("***")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("bad_words")
+}
+
+// ─── FLORA & FAUNA ────────────────────────────────────────────────────────────
+
+model Flora {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  slug               String?  @unique
+  localName          String?  @map("local_name")
+  scientificName     String?  @map("scientific_name")
+  description        String?  @db.Text
+  bestTimeToVisit    String?  @map("best_time_to_visit")
+  imagePath          String?  @map("image_path")
+  category           String   @default("umum")
+  conservationStatus String?  @map("conservation_status")
+  isFeatured         Boolean  @default(false) @map("is_featured")
+  isActive           Boolean  @default(true) @map("is_active")
+  viewCount          BigInt   @default(0) @map("view_count")
+  sortOrder          Int      @default(0) @map("sort_order")
+  metaTitle          String?  @map("meta_title")
+  metaDescription    String?  @db.Text @map("meta_description")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  images   FloraImage[]
+  comments FloraComment[]
+
+  @@map("flora")
+}
+
+model Fauna {
+  id                 Int      @id @default(autoincrement())
+  name               String
+  slug               String?  @unique
+  localName          String?  @map("local_name")
+  scientificName     String?  @map("scientific_name")
+  description        String?  @db.Text
+  bestTimeToVisit    String?  @map("best_time_to_visit")
+  imagePath          String?  @map("image_path")
+  habitat            String?
+  conservationStatus String   @default("LC") @map("conservation_status")
+  category           String   @default("umum")
+  isFeatured         Boolean  @default(false) @map("is_featured")
+  isActive           Boolean  @default(true) @map("is_active")
+  viewCount          BigInt   @default(0) @map("view_count")
+  sortOrder          Int      @default(0) @map("sort_order")
+  metaTitle          String?  @map("meta_title")
+  metaDescription    String?  @db.Text @map("meta_description")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  images   FaunaImage[]
+  comments FaunaComment[]
+
+  @@map("fauna")
+}
+
+model FloraImage {
+  id        Int      @id @default(autoincrement())
+  floraId   Int      @map("flora_id")
+  flora     Flora    @relation(fields: [floraId], references: [id], onDelete: Cascade)
+  imagePath String?  @map("image_path")
+  sortOrder Int      @default(0) @map("sort_order")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("flora_images")
+}
+
+model FaunaImage {
+  id        Int      @id @default(autoincrement())
+  faunaId   Int      @map("fauna_id")
+  fauna     Fauna    @relation(fields: [faunaId], references: [id], onDelete: Cascade)
+  imagePath String?  @map("image_path")
+  sortOrder Int      @default(0) @map("sort_order")
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("fauna_images")
+}
+
+// ─── GALLERY ──────────────────────────────────────────────────────────────────
+
+model GalleryCategory {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  galleries Gallery[]
+
+  @@map("gallery_categories")
+}
+
+model Gallery {
+  id               Int       @id @default(autoincrement())
+  title            String
+  slug             String?   @unique
+  description      String?   @db.Text
+  category         String?
+  location         String?
+  galleryCategoryId Int?     @map("gallery_category_id")
+  galleryCategory  GalleryCategory? @relation(fields: [galleryCategoryId], references: [id], onDelete: SetNull)
+  tags             Json?
+  captureDate      DateTime? @db.Date @map("capture_date")
+  imagePath        String?   @map("image_path")
+  videoUrl         String?   @map("video_url")
+  type             String    @default("image")
+  destinationId    Int?      @map("destination_id")
+  destination      Destination? @relation(fields: [destinationId], references: [id], onDelete: SetNull)
+  isFeatured       Boolean   @default(false) @map("is_featured")
+  isActive         Boolean   @default(true) @map("is_active")
+  viewCount        Int       @default(0) @map("view_count")
+  sortOrder        Int       @default(0) @map("sort_order")
+  metaTitle        String?   @map("meta_title")
+  metaDescription  String?   @map("meta_description")
+  metaKeywords     String?   @map("meta_keywords")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  media     GalleryMedia[]
+  likes     GalleryLike[]
+  comments  GalleryComment[]
+  wishlists GalleryWishlist[]
+
+  @@map("galleries")
+}
+
+model GalleryMedia {
+  id        Int      @id @default(autoincrement())
+  galleryId Int      @map("gallery_id")
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  type      String   @default("image")
+  imagePath String?  @map("image_path")
+  videoUrl  String?  @map("video_url")
+  altText   String?  @map("alt_text")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("gallery_media")
+}
+
+model GalleryLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  galleryId Int      @map("gallery_id")
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, galleryId])
+  @@map("gallery_likes")
+}
+
+model GalleryWishlist {
+  id        Int      @id @default(autoincrement())
+  galleryId Int      @map("gallery_id")
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  userId    Int      @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([galleryId, userId])
+  @@map("gallery_wishlists")
+}
+
+// ─── COMMENTS (DESTINATION, FLORA, FAUNA, GALLERY) ────────────────────────────
+
+model DestinationComment {
+  id            Int       @id @default(autoincrement())
+  destinationId Int       @map("destination_id")
+  destination   Destination @relation(fields: [destinationId], references: [id], onDelete: Cascade)
+  userId        Int?      @map("user_id")
+  user          User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId       Int?      @map("admin_id")
+  admin         Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  parentId      Int?      @map("parent_id")
+  parent        DestinationComment? @relation("DestinationCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies       DestinationComment[] @relation("DestinationCommentReplies")
+  content       String    @db.Text
+  image         String?
+  rating        Int?
+  isVisible     Boolean   @default(true) @map("is_visible")
+  isPinned      Boolean   @default(false) @map("is_pinned")
+  likesCount    Int       @default(0) @map("likes_count")
+  dislikesCount Int       @default(0) @map("dislikes_count")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("destination_comments")
+}
+
+model FloraComment {
+  id        Int       @id @default(autoincrement())
+  userId    Int?      @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId   Int?      @map("admin_id")
+  admin     Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  floraId   Int       @map("flora_id")
+  flora     Flora     @relation(fields: [floraId], references: [id], onDelete: Cascade)
+  content   String    @db.Text
+  isApproved Boolean  @default(true) @map("is_approved")
+  isPinned  Boolean   @default(false) @map("is_pinned")
+  parentId  Int?      @map("parent_id")
+  parent    FloraComment? @relation("FloraCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   FloraComment[] @relation("FloraCommentReplies")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  likes FloraCommentLike[]
+
+  @@map("flora_comments")
+}
+
+model FaunaComment {
+  id        Int       @id @default(autoincrement())
+  userId    Int?      @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId   Int?      @map("admin_id")
+  admin     Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  faunaId   Int       @map("fauna_id")
+  fauna     Fauna     @relation(fields: [faunaId], references: [id], onDelete: Cascade)
+  content   String    @db.Text
+  isApproved Boolean  @default(true) @map("is_approved")
+  isPinned  Boolean   @default(false) @map("is_pinned")
+  parentId  Int?      @map("parent_id")
+  parent    FaunaComment? @relation("FaunaCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   FaunaComment[] @relation("FaunaCommentReplies")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  likes FaunaCommentLike[]
+
+  @@map("fauna_comments")
+}
+
+model GalleryComment {
+  id        Int       @id @default(autoincrement())
+  userId    Int?      @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId   Int?      @map("admin_id")
+  admin     Admin?    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  galleryId Int       @map("gallery_id")
+  gallery   Gallery   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  content   String    @db.Text
+  isApproved Boolean  @default(true) @map("is_approved")
+  isPinned  Boolean   @default(false) @map("is_pinned")
+  parentId  Int?      @map("parent_id")
+  parent    GalleryComment? @relation("GalleryCommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   GalleryComment[] @relation("GalleryCommentReplies")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  likes GalleryCommentLike[]
+
+  @@map("gallery_comments")
+}
+
+model CommentLike {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commentId   BigInt   @map("comment_id")
+  commentType String   @map("comment_type")
+  type        String   @default("like")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, commentId, commentType])
+  @@map("comment_likes")
+}
+
+model FloraCommentLike {
+  id             Int          @id @default(autoincrement())
+  floraCommentId Int          @map("flora_comment_id")
+  floraComment   FloraComment @relation(fields: [floraCommentId], references: [id], onDelete: Cascade)
+  userId         Int          @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isLike         Boolean      @default(true) @map("is_like")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([floraCommentId, userId])
+  @@map("flora_comment_likes")
+}
+
+model FaunaCommentLike {
+  id             Int          @id @default(autoincrement())
+  faunaCommentId Int          @map("fauna_comment_id")
+  faunaComment   FaunaComment @relation(fields: [faunaCommentId], references: [id], onDelete: Cascade)
+  userId         Int          @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isLike         Boolean      @default(true) @map("is_like")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  @@unique([faunaCommentId, userId])
+  @@map("fauna_comment_likes")
+}
+
+model GalleryCommentLike {
+  id               Int            @id @default(autoincrement())
+  galleryCommentId Int            @map("gallery_comment_id")
+  galleryComment   GalleryComment @relation(fields: [galleryCommentId], references: [id], onDelete: Cascade)
+  userId           Int            @map("user_id")
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isLike           Boolean        @default(true) @map("is_like")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  @@unique([galleryCommentId, userId])
+  @@map("gallery_comment_likes")
+}
+
+// ─── NOTIFICATIONS & TRACKING ─────────────────────────────────────────────────
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  userId    Int?      @map("user_id")
+  user      User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String    @db.Text
+  data      Json?
+  icon      String    @default("bell")
+  color     String    @default("primary")
+  link      String?
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id              Int      @id @default(autoincrement())
+  userId          Int      @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint        String   @db.Text
+  endpointHash    String   @map("endpoint_hash")
+  p256dhKey       String?  @map("p256dh_key")
+  authKey         String?  @map("auth_key")
+  contentEncoding String   @default("aes128gcm") @map("content_encoding")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, endpointHash])
+  @@map("push_subscriptions")
+}
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otpCode   String   @map("otp_code")
+  type      String   @default("register")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("otps")
+}
+
+model SearchHistory {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query       String
+  resultType  String?  @map("result_type")
+  resultId    BigInt?  @map("result_id")
+  resultTitle String?  @map("result_title")
+  resultUrl   String?  @map("result_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("search_histories")
+}
+
+model VisitorLog {
+  id        Int      @id @default(autoincrement())
+  ipAddress String?  @map("ip_address")
+  url       String?
+  userAgent String?  @db.Text @map("user_agent")
+  userId    Int?     @map("user_id")
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("visitor_logs")
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?     @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  adminId     Int?     @map("admin_id")
+  admin       Admin?   @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action      String
+  modelType   String?  @map("model_type")
+  modelId     BigInt?  @map("model_id")
+  description String   @db.Text
+  oldValues   Json?    @map("old_values")
+  newValues   Json?    @map("new_values")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @db.Text @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("activity_logs")
+}
+
+// ─── NEWSLETTER ───────────────────────────────────────────────────────────────
+
+model NewsletterSubscriber {
+  id               Int       @id @default(autoincrement())
+  userId           Int?      @unique @map("user_id")
+  user             User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  email            String    @unique
+  name             String?
+  isActive         Boolean   @default(true) @map("is_active")
+  disabledByAdmin  Boolean   @default(false) @map("disabled_by_admin")
+  subscribedAt     DateTime? @map("subscribed_at")
+  unsubscribedAt   DateTime? @map("unsubscribed_at")
+  ipAddress        String?   @map("ip_address")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("newsletter_subscribers")
+}
+
+model NewsletterCampaign {
+  id               Int       @id @default(autoincrement())
+  subject          String
+  content          String    @db.Text
+  status           String    @default("draft")
+  createdById      Int?      @map("created_by")
+  createdBy        Admin?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  scheduledAt      DateTime? @map("scheduled_at")
+  sentAt           DateTime? @map("sent_at")
+  totalRecipients  Int       @default(0) @map("total_recipients")
+  sentCount        Int       @default(0) @map("sent_count")
+  failedCount      Int       @default(0) @map("failed_count")
+  errorMessage     String?   @db.Text @map("error_message")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@map("newsletter_campaigns")
+}
+
+// ─── CHAT ─────────────────────────────────────────────────────────────────────
+
+model ChatConversation {
+  id              Int       @id @default(autoincrement())
+  userId          Int?      @map("user_id")
+  user            User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  adminId         Int?      @map("admin_id")
+  admin           Admin?    @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  guestName       String?   @map("guest_name")
+  guestEmail      String?   @map("guest_email")
+  sessionId       String?   @map("session_id")
+  subject         String?
+  status          String    @default("waiting")
+  rating          Int?
+  ratingFeedback  String?   @db.Text @map("rating_feedback")
+  lastMessageAt   DateTime? @map("last_message_at")
+  closedAt        DateTime? @map("closed_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  messages ChatMessage[]
+
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id             Int              @id @default(autoincrement())
+  conversationId Int              @map("conversation_id")
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderType     String           @map("sender_type")
+  senderId       BigInt?          @map("sender_id")
+  message        String           @db.Text
+  attachment     String?
+  isRead         Boolean          @default(false) @map("is_read")
+  readAt         DateTime?        @map("read_at")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  @@map("chat_messages")
+}
+
+model ChatQuickReply {
+  id         Int      @id @default(autoincrement())
+  title      String
+  message    String   @db.Text
+  category   String?
+  usageCount Int      @default(0) @map("usage_count")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("chat_quick_replies")
+}
+
+// ─── SETTINGS & UPLOADS ───────────────────────────────────────────────────────
+
+model Setting {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String?  @db.Text
+  type        String   @default("string")
+  group       String   @default("general")
+  label       String?
+  description String?  @db.Text
+  isPublic    Boolean  @default(false) @map("is_public")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+model Upload {
+  id        Int      @id @default(autoincrement())
+  hash      String   @unique
+  filename  String
+  imagePath String?  @map("image_path")
+  imageMime String?  @map("image_mime")
+  size      BigInt   @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("uploads")
+}
