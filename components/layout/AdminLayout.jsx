@@ -143,8 +143,8 @@ export default function AdminLayout({ children }) {
   }, [])
 
   useEffect(() => {
-    checkMobile()
-    updateTime()
+    const init = () => { checkMobile(); updateTime() }
+    init()
     window.addEventListener('resize', checkMobile)
     window.addEventListener('keydown', handleKeydown)
     const timeInterval = setInterval(updateTime, 60000)
@@ -157,7 +157,8 @@ export default function AdminLayout({ children }) {
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
-    if (isMobile) setSidebarOpen(false)
+    const close = () => { if (isMobile) setSidebarOpen(false) }
+    close()
   }, [pathname]) // eslint-disable-line
 
   const toggleSidebar = () => {

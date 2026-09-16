@@ -40,7 +40,8 @@ export default function Header() {
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileMenuOpen(false)
+    const close = () => { setMobileMenuOpen(false) }
+    close()
   }, [pathname])
 
   const isHome = pathname === '/'

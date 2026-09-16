@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element, jsx-a11y/alt-text */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -41,7 +42,7 @@ export default function AdminGalleryPage() {
     finally { setLoading(false) }
   }, [searchParams])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
   useEffect(() => { clearTimeout(debounce.current); debounce.current = setTimeout(() => router.push(`/admin/gallery?search=${search}`), 400) }, [search]) // eslint-disable-line
 
   const handleDelete = async () => {

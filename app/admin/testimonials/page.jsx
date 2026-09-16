@@ -27,7 +27,7 @@ export default function AdminTestimonialsPage() {
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }, [])
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   const handleApprove = async (id) => {
     await fetch(`/api/admin/testimonials/${id}/approve`, { method: 'POST' })

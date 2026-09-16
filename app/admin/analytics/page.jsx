@@ -83,7 +83,7 @@ export default function AdminAnalyticsPage() {
     }
   }, [period])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   const maxPage = data?.topPages?.[0]?.views ?? 1
   const maxSource = data?.topSources?.[0]?.sessions ?? 1

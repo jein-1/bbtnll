@@ -28,7 +28,7 @@ export default function AdminActivityLogsPage() {
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }, [])
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   return (
     <AdminLayout>

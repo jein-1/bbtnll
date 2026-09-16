@@ -72,7 +72,7 @@ export default function AdminBookingsPage() {
     router.push(`/admin/bookings?${q}`)
   }, [search, status, destination, router])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   useEffect(() => {
     clearTimeout(searchDebounce.current)

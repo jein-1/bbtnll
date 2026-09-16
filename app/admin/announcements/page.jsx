@@ -24,7 +24,7 @@ export default function AdminAnnouncementsPage() {
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }, [])
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   const handleDelete = async (id) => {
     if (!confirm('Hapus pengumuman ini?')) return

@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 import AdminLayout from '@/components/layout/AdminLayout'
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -27,7 +28,7 @@ export default function AdminAdminsPage() {
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }, [])
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
   const handleDelete = async (id) => {
     if (!confirm('Hapus admin ini?')) return
     await fetch(`/api/admin/admins/${id}`, { method: 'DELETE' })

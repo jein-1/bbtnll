@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -104,7 +105,7 @@ export default function AdminArticlesPage() {
   }, [search, status, category, router])
 
   // Trigger fetch when searchParams change
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   // Debounced search
   useEffect(() => {

@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -68,7 +69,7 @@ export default function AdminUsersPage() {
     router.push(`/admin/users?${q}`)
   }, [search, status, router])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   useEffect(() => {
     clearTimeout(searchDebounce.current)

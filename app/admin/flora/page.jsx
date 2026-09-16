@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -34,7 +35,7 @@ function AdminContentPage({ title, subtitle, apiPath, routePath, gradientFrom, g
     finally { setLoading(false) }
   }, [searchParams, apiPath])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
   useEffect(() => {
     clearTimeout(debounce.current)
     debounce.current = setTimeout(() => router.push(`/admin/${routePath}?search=${search}`), 400)

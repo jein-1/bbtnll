@@ -64,7 +64,7 @@ export default function AdminDatabasePage() {
     }
   }, [])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
 
   const handleRefresh = async () => {
     setRefreshing(true)

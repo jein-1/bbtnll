@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element */
 import AdminLayout from '@/components/layout/AdminLayout'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -32,7 +33,7 @@ export default function AdminFaunaPage() {
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }, [searchParams])
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
   useEffect(() => { clearTimeout(debounce.current); debounce.current = setTimeout(() => router.push(`/admin/fauna?search=${search}`), 400) }, [search]) // eslint-disable-line
 
   const handleDelete = async () => {

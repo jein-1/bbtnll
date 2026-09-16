@@ -1,0 +1,1 @@
+const React = require('react'); const {useEffect, useState, useCallback} = React; function App() { const [a, setA] = useState(0); const fetchData = useCallback(() => { setA(1) }, []); useEffect(() => { fetchData() }, [fetchData]) }

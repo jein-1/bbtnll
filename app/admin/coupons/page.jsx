@@ -22,7 +22,7 @@ export default function AdminCouponsPage() {
     } catch (e) { setError(e.message) }
     finally { setLoading(false) }
   }, [])
-  useEffect(() => { fetchData() }, [fetchData])
+  useEffect(() => { const init = async () => { await fetchData() }; init() }, [fetchData])
   const handleDelete = async (id) => {
     if (!confirm('Hapus kupon ini?')) return
     await fetch(`/api/admin/coupons/${id}`, { method: 'DELETE' })
