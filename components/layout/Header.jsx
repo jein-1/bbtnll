@@ -66,9 +66,9 @@ export default function Header() {
     <header className={headerClasses}>
       <nav className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-500 to-teal-700 flex items-center justify-center shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform">
               <span className="text-white font-bold text-xl leading-none">T</span>
             </div>
             <span className={`text-xl font-bold tracking-tight ${isHome && !isScrolled ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
@@ -90,13 +90,11 @@ export default function Header() {
         <div className="hidden md:flex items-center gap-4">
           {session ? (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className={`relative h-10 w-10 rounded-full ${isHome && !isScrolled ? 'hover:bg-white/20' : ''}`}>
-                  <Avatar className="h-10 w-10 border-2 border-emerald-500/20">
-                    <AvatarImage src={session.user?.image} alt={session.user?.name} />
-                    <AvatarFallback className="bg-emerald-100 text-emerald-700">{session.user?.name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </Button>
+              <DropdownMenuTrigger className={`relative h-10 w-10 rounded-full flex items-center justify-center cursor-pointer border-0 bg-transparent p-0 transition-colors outline-none ${isHome && !isScrolled ? 'hover:bg-white/20' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>
+                <Avatar className="h-10 w-10 border-2 border-emerald-500/20">
+                  <AvatarImage src={session.user?.image} alt={session.user?.name} />
+                  <AvatarFallback className="bg-emerald-100 text-emerald-700">{session.user?.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">

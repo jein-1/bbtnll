@@ -7,11 +7,11 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* ─── HERO SECTION ─────────────────────────────────────────────────── */}
-      <section className="relative h-[90vh] min-h-[600px] flex items-center justify-center overflow-hidden">
+      <section className="relative h-[90vh] min-h-150 flex items-center justify-center overflow-hidden">
         {/* Background Image with Overlay */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-slate-900/40 mix-blend-multiply z-10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/20 to-transparent z-10" />
+          <div className="absolute inset-0 bg-linear-to-t from-slate-950 via-slate-900/20 to-transparent z-10" />
           {/* Placeholder Hero Image - In real app, fetch from CMS or use static high-res */}
           <div className="w-full h-full bg-slate-800 bg-[url('https://images.unsplash.com/photo-1542224566-6e85f2e10715?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center" />
         </div>
@@ -23,7 +23,7 @@ export default function Home() {
           </span>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight mb-6 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
             Taman Nasional <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-teal-400">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-300 to-teal-400">
               Lore Lindu
             </span>
           </h1>

@@ -1,4 +1,4 @@
-// Next.js Middleware — Route Protection
+// Next.js Proxy — Route Protection (Pengganti middleware.js di Next.js 16)
 // Mengganti Laravel middleware: auth, admin, role-check
 
 import NextAuth from 'next-auth'
@@ -13,18 +13,27 @@ const USER_ROUTES = [
   '/wishlist', '/notifications', '/activity-log',
 ]
 
-// Routes yang memerlukan login ADMIN
-const ADMIN_ROUTES = ['/admin']
-
 // Routes booking (harus login user)
 const BOOKING_ROUTES = ['/book/', '/booking/']
+
+// Routes admin yang TIDAK perlu proteksi (halaman publik admin)
+const ADMIN_PUBLIC_ROUTES = [
+  '/admin/login',
+  '/admin/two-factor',
+  '/admin/account-blocked',
+]
 
 export default auth((req) => {
   const { nextUrl, auth: session } = req
   const pathname = nextUrl.pathname
 
+  // Jangan proses API routes
+  if (pathname.startsWith('/api/')) return NextResponse.next()
+
   // ─── Admin Routes ─────────────────────────────────────────────────────
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login' && pathname !== '/admin/two-factor/verify' && pathname !== '/admin/account-blocked') {
+  const isAdminPublic = ADMIN_PUBLIC_ROUTES.some(r => pathname.startsWith(r))
+
+  if (pathname.startsWith('/admin') && !isAdminPublic) {
     if (!session) {
       return NextResponse.redirect(new URL('/admin/login', req.url))
     }
@@ -60,7 +69,7 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    // Match all paths except static files, images, api/auth
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    // Match all paths except static files, images, dan NextAuth API routes
+    '/((?!_next/static|_next/image|favicon.ico|api/auth|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

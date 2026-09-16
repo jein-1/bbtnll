@@ -2,8 +2,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import AuthProvider from '@/components/providers/AuthProvider'
-import Header from '@/components/layout/Header'
-import Footer from '@/components/layout/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,21 +17,18 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="id" className="scroll-smooth">
-      <body className={`${inter.className} bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 antialiased min-h-screen flex flex-col`}>
+      <body className={`${inter.className} antialiased min-h-screen`}>
         <AuthProvider>
-          <Header />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-          <Toaster 
-            position="top-right" 
+          {children}
+          <Toaster
+            position="top-right"
             toastOptions={{
               duration: 4000,
               style: {
-                background: '#333',
+                background: '#071b17',
                 color: '#fff',
-                borderRadius: '8px',
+                borderRadius: '12px',
+                fontSize: '13px',
               },
             }}
           />

@@ -12,7 +12,7 @@ export default function LoginPage() {
     <div className="min-h-screen pt-24 pb-16 flex items-center justify-center bg-slate-50 dark:bg-slate-950">
       <div className="w-full max-w-md bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 mx-auto flex items-center justify-center mb-4">
+          <div className="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-500 to-teal-700 mx-auto flex items-center justify-center mb-4">
              <span className="text-white font-bold text-2xl leading-none">T</span>
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Selamat Datang Kembali</h1>

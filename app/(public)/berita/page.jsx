@@ -19,7 +19,7 @@ export default function BeritaPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <article key={i} className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 hover:shadow-lg transition-shadow">
-              <div className="aspect-[16/9] bg-slate-200 dark:bg-slate-800 relative">
+              <div className="aspect-video bg-slate-200 dark:bg-slate-800 relative">
                 <div className="absolute top-4 left-4 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                   Pengumuman
                 </div>

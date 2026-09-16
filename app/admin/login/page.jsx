@@ -20,18 +20,33 @@ export default function AdminLoginPage() {
     setIsLoading(true)
     setError('')
     
-    // Auth login menggunakan konfigurasi "admin-credentials" di auth.js
-    const res = await signIn('admin-credentials', {
-      redirect: false,
-      email,
-      password
-    })
+    try {
+      // Auth login menggunakan konfigurasi "admin-credentials" di auth.js
+      const res = await signIn('admin-credentials', {
+        redirect: false,
+        email,
+        password
+      })
 
-    if (res?.error) {
-      setError('Kredensial tidak valid. Silakan periksa kembali email dan kata sandi Anda.')
+      if (!res) {
+        setError('Tidak ada respons dari server. Coba lagi.')
+        setIsLoading(false)
+        return
+      }
+
+      if (res.error || !res.ok) {
+        if (res.error === 'ADMIN_BLOCKED') {
+          setError('Akun admin Anda telah dinonaktifkan.')
+        } else {
+          setError('Kredensial tidak valid. Silakan periksa kembali email dan kata sandi Anda.')
+        }
+        setIsLoading(false)
+      } else {
+        router.push('/admin/dashboard') // Redirect ke dashboard jika berhasil
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan. Silakan coba lagi.')
       setIsLoading(false)
-    } else {
-      router.push('/admin/dashboard') // Redirect ke dashboard jika berhasil
     }
   }
 
@@ -43,7 +58,7 @@ export default function AdminLoginPage() {
       
       <div className="w-full max-w-md bg-slate-950/80 backdrop-blur-xl p-10 rounded-[2rem] shadow-2xl border border-slate-800 relative z-10">
         <div className="text-center mb-10">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 mx-auto flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
+          <div className="w-16 h-16 rounded-2xl bg-linear-to-br from-emerald-500 to-teal-700 mx-auto flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/20">
              <span className="text-white font-black text-3xl leading-none">T</span>
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Portal Admin TNLL</h1>

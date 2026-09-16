@@ -41,7 +41,7 @@ export default function DestinasiPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all">
-              <div className="aspect-[4/3] bg-slate-200 dark:bg-slate-800 relative">
+              <div className="aspect-4/3 bg-slate-200 dark:bg-slate-800 relative">
                  {/* Placeholder Image */}
                  <div className="absolute inset-0 flex items-center justify-center text-slate-400">
                     [Gambar Destinasi {i}]
